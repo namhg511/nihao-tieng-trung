@@ -3,9 +3,53 @@
   <head>
     <meta charset="UTF-8">
     <title>Từ điển Trung</title>
+
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #fdf6ec;
+        text-align: center;
+        padding-top: 60px;
+      }
+      h1 {
+        font-size: 96px;
+        color: #2c3e50;
+        margin: 0;
+      }
+      #nghia {
+        font-size: 24px;
+        visibility: hidden;
+      }
+      button {
+        font-size: 18px;
+        padding: 10px 24px;
+        border: none;
+        border-radius: 8px;
+        background: #c0392b;
+        color: white;
+        cursor: pointer;
+      }
+    </style>
   </head>
+
   <body>
-    <h1>你好</h1>
-    <p>nǐ hǎo — Xin chào</p>
+    <h1>学习</h1>
+    <p id="nghia">xuéxí — Học tập</p>
+    <button id="nutXem">Xem nghĩa</button>
+
+    <script>
+      const nut = document.getElementById('nutXem')
+      const nghia = document.getElementById('nghia')
+
+      nut.addEventListener('click', () => {
+        if (nghia.style.visibility === 'visible') {
+          nghia.style.visibility = 'hidden'
+          nut.textContent = 'Xem nghĩa'
+        } else {
+          nghia.style.visibility = 'visible'
+          nut.textContent = 'Ẩn nghĩa'
+        }
+      })
+    </script>
   </body>
 </html>
