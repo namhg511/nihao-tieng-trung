@@ -13,7 +13,7 @@
       }
       h1 {
         font-size: 96px;
-        color: #2c3e50;
+        color: #c0392b;
         margin: 0;
       }
       #nghia {
@@ -29,27 +29,84 @@
         color: white;
         cursor: pointer;
       }
+      button { margin: 4px; }
+      #dem { color: #888; }
     </style>
   </head>
 
   <body>
-    <h1>学习</h1>
-    <p id="nghia">xuéxí — Học tập</p>
-    <button id="nutXem">Xem nghĩa</button>
+  <h1 id="chu"></h1>
+  <p id="nghia"></p>
+  <button id="nutXem">Xem nghĩa</button>
+  <button id="nutTruoc">← Từ trước</button>
+  <button id="nutTiep">Từ tiếp theo →</button>
+  <button id="nutNgauNhien">Ngẫu nhiên</button>
+  <p id="dem"></p>
 
-    <script>
-      const nut = document.getElementById('nutXem')
-      const nghia = document.getElementById('nghia')
+  <script>
+    const boTu = [
+      { chu: '你好', pinyin: 'nǐ hǎo',   nghia: 'Xin chào' },
+      { chu: '学习', pinyin: 'xuéxí',    nghia: 'Học tập' },
+      { chu: '谢谢', pinyin: 'xièxie',   nghia: 'Cảm ơn' },
+      { chu: '朋友', pinyin: 'péngyou',  nghia: 'Bạn bè' },
+      { chu: '中国', pinyin: 'Zhōngguó', nghia: 'Trung Quốc' },
+      { chu: '学校', pinyin: 'xuéxiào',  nghia: 'Trường học' },
+      { chu: '老师', pinyin: 'lǎoshī',   nghia: 'Giáo viên' },
+      { chu: '学生', pinyin: 'xuéshēng', nghia: 'Học sinh' },
+      { chu: '家人', pinyin: 'jiārén',   nghia: 'Gia đình' },
+      { chu: '工作', pinyin: 'gōngzuò',  nghia: 'Công việc' }
+    ]
+    let viTri = 0
 
-      nut.addEventListener('click', () => {
-        if (nghia.style.visibility === 'visible') {
-          nghia.style.visibility = 'hidden'
-          nut.textContent = 'Xem nghĩa'
-        } else {
-          nghia.style.visibility = 'visible'
-          nut.textContent = 'Ẩn nghĩa'
-        }
-      })
-    </script>
-  </body>
+    const chu = document.getElementById('chu')
+    const nghia = document.getElementById('nghia')
+    const nutXem = document.getElementById('nutXem')
+    const nutTruoc = document.getElementById('nutTruoc')
+    const nutTiep = document.getElementById('nutTiep')
+    const nutNgauNhien = document.getElementById('nutNgauNhien')
+    const dem = document.getElementById('dem')
+
+    function hienTu() {
+      const tu = boTu[viTri]
+      chu.textContent = tu.chu
+      nghia.textContent = tu.pinyin + ' — ' + tu.nghia
+      nghia.style.visibility = 'hidden'
+      nutXem.textContent = 'Xem nghĩa'
+      dem.textContent = (viTri + 1) + ' / ' + boTu.length
+    }
+
+    nutXem.addEventListener('click', () => {
+      if (nghia.style.visibility === 'visible') {
+        nghia.style.visibility = 'hidden'
+        nutXem.textContent = 'Xem nghĩa'
+      } else {
+        nghia.style.visibility = 'visible'
+        nutXem.textContent = 'Ẩn nghĩa'
+      }
+    })
+
+    nutTiep.addEventListener('click', () => {
+      viTri = viTri + 1
+      if (viTri === boTu.length) {
+        viTri = 0
+      }
+      hienTu()
+    })
+
+    nutTruoc.addEventListener('click', () => {
+      viTri = viTri - 1
+      if (viTri === -1) {
+        viTri = boTu.length - 1
+      }
+      hienTu()
+    })
+
+    nutNgauNhien.addEventListener('click', () => {
+      viTri = Math.floor(Math.random() * boTu.length)
+      hienTu()
+    })
+
+    hienTu()
+  </script>
+</body>
 </html>
