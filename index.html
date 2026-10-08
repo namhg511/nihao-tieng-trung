@@ -31,10 +31,33 @@
       }
       button { margin: 4px; }
       #dem { color: #888; }
+      #oTim {
+        font-size: 18px;
+        padding: 8px 12px;
+        width: 260px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+      }
+      #ketQua {
+        list-style: none;
+        padding: 0;
+        margin: 8px auto 24px;
+        width: 286px;
+        text-align: left;
+      }
+      #ketQua li {
+        padding: 6px 12px;
+        cursor: pointer;
+        border-radius: 6px;
+      }
+      #ketQua li:hover { background: #f3e3cc; }
     </style>
   </head>
 
   <body>
+  <input id="oTim" type="text" placeholder="Tìm chữ Hán, pinyin, nghĩa...">
+  <ul id="ketQua"></ul>
+
   <h1 id="chu"></h1>
   <p id="nghia"></p>
   <button id="nutXem">Xem nghĩa</button>
@@ -65,6 +88,8 @@
     const nutTiep = document.getElementById('nutTiep')
     const nutNgauNhien = document.getElementById('nutNgauNhien')
     const dem = document.getElementById('dem')
+    const oTim = document.getElementById('oTim')
+    const ketQua = document.getElementById('ketQua')
 
     function hienTu() {
       const tu = boTu[viTri]
@@ -104,6 +129,59 @@
     nutNgauNhien.addEventListener('click', () => {
       viTri = Math.floor(Math.random() * boTu.length)
       hienTu()
+    })
+
+    // Đổi chuỗi về dạng chữ thường, không dấu để so sánh cho dễ
+    function boDau(chuoi) {
+      return chuoi
+        .toLowerCase()                    // đổi sang chữ thường
+        .normalize('NFD')                 // tách dấu ra khỏi chữ: "é" thành "e" + dấu sắc
+        .replace(/[̀-ͯ]/g, '')  // xoá các dấu vừa tách ra
+        .replace(/đ/g, 'd')               // "đ" không tách được bằng NFD nên đổi riêng
+    }
+
+    // Mỗi lần gõ (hoặc xoá) một ký tự trong ô tìm kiếm thì chạy đoạn này
+    oTim.addEventListener('input', () => {
+      // Lấy chữ đang gõ, bỏ khoảng trắng 2 đầu, đổi sang chữ thường không dấu
+      const tuKhoa = boDau(oTim.value.trim())
+
+      // Xoá danh sách kết quả cũ trước khi hiện kết quả mới
+      ketQua.innerHTML = ''
+
+      // Ô tìm kiếm trống thì không hiện gì cả, dừng luôn ở đây
+      if (tuKhoa === '') {
+        return
+      }
+
+      // Giữ lại những từ có chữ Hán, pinyin hoặc nghĩa chứa từ khoá
+      const timDuoc = boTu.filter((tu) => {
+        return tu.chu.includes(tuKhoa) ||                     // khớp chữ Hán
+               boDau(tu.pinyin).includes(tuKhoa) ||           // khớp pinyin (không dấu)
+               boDau(tu.nghia).includes(tuKhoa)               // khớp nghĩa (không dấu)
+      })
+
+      // Không tìm được từ nào thì báo "Không tìm thấy" rồi dừng
+      if (timDuoc.length === 0) {
+        const dong = document.createElement('li')  // tạo một dòng mới
+        dong.textContent = 'Không tìm thấy'        // ghi chữ vào dòng
+        dong.style.cursor = 'default'              // dòng này không bấm được
+        ketQua.appendChild(dong)                   // gắn dòng vào danh sách
+        return
+      }
+
+      // Với mỗi từ tìm được, tạo một dòng trong danh sách
+      timDuoc.forEach((tu) => {
+        const dong = document.createElement('li')                           // tạo một dòng mới
+        dong.textContent = tu.chu + '  ' + tu.pinyin + ' — ' + tu.nghia     // ghi chữ Hán, pinyin, nghĩa
+        // Khi bấm vào dòng này thì thẻ chính nhảy tới từ đó
+        dong.addEventListener('click', () => {
+          viTri = boTu.indexOf(tu)   // tìm vị trí của từ này trong mảng boTu gốc
+          hienTu()                   // hiện từ đó lên thẻ chính
+          oTim.value = ''            // xoá chữ trong ô tìm kiếm
+          ketQua.innerHTML = ''      // ẩn danh sách kết quả
+        })
+        ketQua.appendChild(dong)     // gắn dòng vào danh sách
+      })
     })
 
     hienTu()
