@@ -1,0 +1,352 @@
+/* =====================================================================
+   BIẾN MÀU & KÍCH THƯỚC — muốn đổi tông màu cả app thì chỉ cần sửa ở đây
+   ===================================================================== */
+:root {
+  --mau-chinh: #c0392b;          /* đỏ chủ đạo */
+  --mau-chinh-dam: #a93226;      /* đỏ đậm hơn, dùng khi rê chuột vào nút */
+  --mau-nen: #fdf6ec;            /* nền kem của cả app */
+  --mau-nen-sidebar: #f7ecdc;    /* nền sidebar, đậm hơn nền chính một chút */
+  --mau-the: #ffffff;            /* nền các "thẻ" (khung trắng) */
+  --mau-chu: #2d2a26;            /* màu chữ chính */
+  --mau-chu-phu: #8c8379;        /* màu chữ phụ (xám), ví dụ pinyin */
+  --mau-vien: #ecdfcc;           /* màu đường viền mảnh */
+  --mau-hover: #faf1e4;          /* nền khi rê chuột qua một dòng */
+  --mau-chon: #f9e3d6;           /* nền dòng / mục đang được chọn */
+
+  --bo-goc: 10px;                /* độ bo góc chung */
+  --bong: 0 1px 2px rgba(90, 60, 30, 0.05), 0 4px 14px rgba(90, 60, 30, 0.05);  /* bóng đổ rất nhẹ */
+
+  --font-chung: "Segoe UI", "Microsoft YaHei", sans-serif;   /* chữ Latin dùng Segoe UI, gặp chữ Hán tự chuyển sang YaHei */
+  --font-han: "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+
+/* =====================================================================
+   NỀN TẢNG: cả cửa sổ cao 100%, KHÔNG cho cả trang cuộn
+   ===================================================================== */
+* { box-sizing: border-box; }    /* chiều rộng đã tính luôn padding và viền, dễ căn hơn */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;              /* cấm cả trang cuộn — chỉ các vùng bên trong được cuộn */
+}
+
+body {
+  font-family: var(--font-chung);
+  color: var(--mau-chu);
+  background: var(--mau-nen);
+}
+
+/* Mọi chỗ hiển thị chữ Hán đều dùng font Microsoft YaHei cho đẹp */
+.chu-han { font-family: var(--font-han); }
+
+/* Icon SVG: chỉ vẽ nét, màu theo màu chữ */
+svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* =====================================================================
+   BỐ CỤC TỔNG: grid 2 cột — sidebar 180px | nội dung chiếm phần còn lại
+   ===================================================================== */
+.ung-dung {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  height: 100%;
+}
+
+/* =====================================================================
+   SIDEBAR
+   ===================================================================== */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 12px;
+  background: var(--mau-nen-sidebar);
+  border-right: 1px solid var(--mau-vien);
+}
+
+.logo {
+  font-weight: 600;
+  color: var(--mau-chinh);
+  padding: 0 10px 18px;
+}
+
+.muc-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--bo-goc);
+  background: transparent;
+  color: var(--mau-chu);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.muc-menu:hover:not(:disabled) { background: var(--mau-hover); }
+
+/* Mục đang chọn: nền trắng, chữ đỏ, có bóng nhẹ cho nổi lên */
+.muc-menu.dang-chon {
+  background: var(--mau-the);
+  color: var(--mau-chinh);
+  font-weight: 600;
+  box-shadow: var(--bong);
+}
+
+/* Mục chưa làm: mờ đi, con trỏ chuột báo "không bấm được" */
+.muc-menu:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.nhan-sap-co {
+  margin-left: auto;             /* đẩy nhãn sang sát mép phải */
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--mau-vien);
+  color: var(--mau-chu-phu);
+}
+
+/* =====================================================================
+   VÙNG NỘI DUNG & CÁC TRANG
+   ===================================================================== */
+.noi-dung {
+  padding: 24px;
+  min-width: 0;                  /* cho phép co lại, không bị nội dung bên trong đẩy phình ra */
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Mặc định mọi trang đều ẩn; trang nào có lớp "dang-hien" mới được hiện */
+.trang { display: none; height: 100%; }
+
+/* Khung trắng dùng chung: bo góc + bóng nhẹ */
+.the {
+  background: var(--mau-the);
+  border: 1px solid var(--mau-vien);
+  border-radius: 12px;
+  box-shadow: var(--bong);
+}
+
+/* =====================================================================
+   TRANG TRA TỪ: grid 2 hàng — ô tìm (cao vừa đủ) | khung kết quả (phần còn lại)
+   ===================================================================== */
+.trang-tra-tu.dang-hien {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+}
+
+.o-tim {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  background: var(--mau-the);
+  border: 1px solid var(--mau-vien);
+  border-radius: 12px;
+  box-shadow: var(--bong);
+  color: var(--mau-chu-phu);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* Khi đang gõ trong ô thì viền đổi sang đỏ nhạt */
+.o-tim:focus-within {
+  border-color: var(--mau-chinh);
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+}
+
+.o-tim input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 14px 0;
+  font-size: 17px;
+  font-family: var(--font-chung);
+  color: var(--mau-chu);
+}
+
+/* Khung kết quả: grid 2 cột — danh sách 300px | chi tiết phần còn lại */
+.khung-tra {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 16px;
+  min-height: 0;                 /* QUAN TRỌNG: không có dòng này thì danh sách dài sẽ kéo giãn cả trang */
+}
+
+/* ----- Cột trái: danh sách kết quả ----- */
+.danh-sach {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;              /* nhiều kết quả quá thì chỉ cột này hiện thanh cuộn */
+  min-height: 0;
+}
+
+/* Khi chưa có kết quả nào thì ẩn luôn khung trắng của danh sách */
+.danh-sach:empty { visibility: hidden; }
+
+.dong-ket-qua {
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.dong-ket-qua:hover { background: var(--mau-hover); }
+.dong-ket-qua.dang-chon { background: var(--mau-chon); }
+
+/* Hàng trên: chữ Hán + pinyin; hàng dưới: nghĩa ngắn. Dài quá thì cắt bằng "…" */
+.dong-tren,
+.nghia-ngan {
+  white-space: nowrap;           /* không xuống dòng */
+  overflow: hidden;              /* phần thừa bị giấu đi */
+  text-overflow: ellipsis;       /* và thay bằng dấu "…" */
+}
+
+.dong-tren .chu-han {
+  font-size: 20px;
+  margin-right: 8px;
+}
+
+.dong-tren .pinyin {
+  font-size: 13px;
+  color: var(--mau-chu-phu);
+}
+
+.nghia-ngan {
+  font-size: 13px;
+  color: var(--mau-chu);
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+/* ----- Cột phải: chi tiết từ ----- */
+.chi-tiet {
+  padding: 32px 36px;
+  overflow-y: auto;              /* nghĩa quá dài thì cột này tự cuộn, cả trang vẫn đứng yên */
+  min-height: 0;
+}
+
+.chu-to {
+  font-size: 72px;
+  line-height: 1.15;
+  color: var(--mau-chinh);
+}
+
+.pinyin-to {
+  font-size: 22px;
+  color: var(--mau-chu-phu);
+  margin-top: 6px;
+}
+
+.phon-the {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--mau-chu-phu);
+}
+
+.phon-the .chu-han { font-size: 18px; color: var(--mau-chu); }
+
+.danh-sach-nghia {
+  margin: 24px 0 0;
+  padding-left: 22px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.danh-sach-nghia li { margin-bottom: 4px; }
+.danh-sach-nghia li::marker { color: var(--mau-chinh); }
+
+/* Lời hướng dẫn / thông báo nhẹ nhàng khi chưa có gì để hiện */
+.loi-nhan {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--mau-chu-phu);
+  gap: 6px;
+}
+
+.loi-nhan .chu-han { font-size: 48px; color: var(--mau-vien); }
+
+/* =====================================================================
+   TRANG ÔN TẬP: thẻ flashcard nằm giữa vùng nội dung
+   ===================================================================== */
+.trang-on-tap.dang-hien {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.the-on-tap {
+  width: min(560px, 100%);
+  padding: 40px 32px 28px;
+  text-align: center;
+}
+
+.chu-flashcard {
+  font-size: 96px;
+  line-height: 1.2;
+  color: var(--mau-chinh);
+}
+
+.nghia-flashcard {
+  font-size: 22px;
+  min-height: 1.5em;             /* giữ chỗ sẵn để thẻ không nhảy khi hiện/ẩn nghĩa */
+  margin: 12px 0 20px;
+  visibility: hidden;
+}
+
+.hang-nut {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.nut {
+  font: inherit;
+  font-size: 15px;
+  padding: 9px 18px;
+  border: 1px solid var(--mau-vien);
+  border-radius: 8px;
+  background: var(--mau-the);
+  color: var(--mau-chu);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.nut:hover { background: var(--mau-hover); border-color: var(--mau-chinh); }
+
+.nut-chinh {
+  background: var(--mau-chinh);
+  border-color: var(--mau-chinh);
+  color: white;
+  padding: 10px 28px;
+}
+
+.nut-chinh:hover { background: var(--mau-chinh-dam); border-color: var(--mau-chinh-dam); }
+
+.dem {
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: var(--mau-chu-phu);
+}

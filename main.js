@@ -62,8 +62,10 @@ ipcMain.handle('tim-tu', (suKien, tuKhoa) => {
 
 function taoCuaSo() {
   const cuaSo = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1100,       // kích thước mặc định khi mở app
+    height: 700,
+    minWidth: 900,     // không cho kéo cửa sổ nhỏ hơn mức này (tránh vỡ bố cục)
+    minHeight: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),  // file chạy trước trang, làm "cầu nối" an toàn
       contextIsolation: true,                       // tách riêng code trang web và code preload

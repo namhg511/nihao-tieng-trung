@@ -1,195 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
   <head>
     <meta charset="UTF-8">
     <title>Từ điển Trung</title>
-
-    <style>
-      body {
-        font-family: sans-serif;
-        background: #fdf6ec;
-        text-align: center;
-        padding-top: 60px;
-      }
-      h1 {
-        font-size: 96px;
-        color: #c0392b;
-        margin: 0;
-      }
-      #nghia {
-        font-size: 24px;
-        visibility: hidden;
-      }
-      button {
-        font-size: 18px;
-        padding: 10px 24px;
-        border: none;
-        border-radius: 8px;
-        background: #c0392b;
-        color: white;
-        cursor: pointer;
-      }
-      button { margin: 4px; }
-      #dem { color: #888; }
-      #oTim {
-        font-size: 18px;
-        padding: 8px 12px;
-        width: 260px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-      }
-      #ketQua {
-        list-style: none;
-        padding: 0;
-        margin: 8px auto 24px;
-        width: 286px;
-        text-align: left;
-      }
-      #ketQua li {
-        padding: 6px 12px;
-        cursor: pointer;
-        border-radius: 6px;
-      }
-      #ketQua li:hover { background: #f3e3cc; }
-    </style>
+    <!-- Toàn bộ phần trang trí (màu, bố cục, font) nằm trong style.css -->
+    <link rel="stylesheet" href="style.css">
   </head>
 
   <body>
-  <input id="oTim" type="text" placeholder="Tìm chữ Hán, pinyin, nghĩa...">
-  <ul id="ketQua"></ul>
+    <!-- Khung chính: chia 2 cột bằng CSS grid — sidebar bên trái, nội dung bên phải -->
+    <div class="ung-dung">
 
-  <h1 id="chu"></h1>
-  <p id="nghia"></p>
-  <button id="nutXem">Xem nghĩa</button>
-  <button id="nutTruoc">← Từ trước</button>
-  <button id="nutTiep">Từ tiếp theo →</button>
-  <button id="nutNgauNhien">Ngẫu nhiên</button>
-  <p id="dem"></p>
+      <!-- ============ SIDEBAR (thanh menu bên trái) ============ -->
+      <nav class="sidebar">
+        <div class="logo"><span class="chu-han">你好</span> Tiếng Trung</div>
 
-  <script>
-    const boTu = [
-      { chu: '你好', pinyin: 'nǐ hǎo',   nghia: 'Xin chào' },
-      { chu: '学习', pinyin: 'xuéxí',    nghia: 'Học tập' },
-      { chu: '谢谢', pinyin: 'xièxie',   nghia: 'Cảm ơn' },
-      { chu: '朋友', pinyin: 'péngyou',  nghia: 'Bạn bè' },
-      { chu: '中国', pinyin: 'Zhōngguó', nghia: 'Trung Quốc' },
-      { chu: '学校', pinyin: 'xuéxiào',  nghia: 'Trường học' },
-      { chu: '老师', pinyin: 'lǎoshī',   nghia: 'Giáo viên' },
-      { chu: '学生', pinyin: 'xuéshēng', nghia: 'Học sinh' },
-      { chu: '家人', pinyin: 'jiārén',   nghia: 'Gia đình' },
-      { chu: '工作', pinyin: 'gōngzuò',  nghia: 'Công việc' }
-    ]
-    let viTri = 0
+        <!-- data-trang cho biết bấm nút này thì mở trang nào -->
+        <button class="muc-menu dang-chon" data-trang="tra-tu">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          Tra từ
+        </button>
+        <button class="muc-menu" data-trang="on-tap">
+          <svg viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>
+          Ôn tập
+        </button>
+        <!-- disabled: nút bị khoá, bấm không làm gì -->
+        <button class="muc-menu" disabled>
+          <svg viewBox="0 0 24 24"><path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z"/><path d="M8 9h8M8 13h6"/></svg>
+          Sổ từ <span class="nhan-sap-co">Sắp có</span>
+        </button>
+        <button class="muc-menu" disabled>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>
+          Cài đặt <span class="nhan-sap-co">Sắp có</span>
+        </button>
+      </nav>
 
-    const chu = document.getElementById('chu')
-    const nghia = document.getElementById('nghia')
-    const nutXem = document.getElementById('nutXem')
-    const nutTruoc = document.getElementById('nutTruoc')
-    const nutTiep = document.getElementById('nutTiep')
-    const nutNgauNhien = document.getElementById('nutNgauNhien')
-    const dem = document.getElementById('dem')
-    const oTim = document.getElementById('oTim')
-    const ketQua = document.getElementById('ketQua')
+      <!-- ============ VÙNG NỘI DUNG (bên phải) ============ -->
+      <main class="noi-dung">
 
-    function hienTu() {
-      const tu = boTu[viTri]
-      chu.textContent = tu.chu
-      nghia.textContent = tu.pinyin + ' — ' + tu.nghia
-      nghia.style.visibility = 'hidden'
-      nutXem.textContent = 'Xem nghĩa'
-      dem.textContent = (viTri + 1) + ' / ' + boTu.length
-    }
+        <!-- ----- Trang TRA TỪ ----- -->
+        <section id="trang-tra-tu" class="trang trang-tra-tu dang-hien">
+          <!-- Ô tìm kiếm có icon kính lúp -->
+          <label class="o-tim">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input id="oTim" type="text" placeholder="Gõ chữ Hán hoặc pinyin…" autocomplete="off">
+          </label>
 
-    nutXem.addEventListener('click', () => {
-      if (nghia.style.visibility === 'visible') {
-        nghia.style.visibility = 'hidden'
-        nutXem.textContent = 'Xem nghĩa'
-      } else {
-        nghia.style.visibility = 'visible'
-        nutXem.textContent = 'Ẩn nghĩa'
-      }
-    })
+          <!-- Chia 2 cột: danh sách kết quả | chi tiết từ đang chọn -->
+          <div class="khung-tra">
+            <ul id="ketQua" class="the danh-sach"></ul>
+            <div id="chiTiet" class="the chi-tiet"></div>
+          </div>
+        </section>
 
-    nutTiep.addEventListener('click', () => {
-      viTri = viTri + 1
-      if (viTri === boTu.length) {
-        viTri = 0
-      }
-      hienTu()
-    })
+        <!-- ----- Trang ÔN TẬP (flashcard) ----- -->
+        <section id="trang-on-tap" class="trang trang-on-tap">
+          <div class="the the-on-tap">
+            <div id="chu" class="chu-han chu-flashcard"></div>
+            <p id="nghia" class="nghia-flashcard"></p>
+            <div class="hang-nut">
+              <button id="nutXem" class="nut nut-chinh">Xem nghĩa</button>
+            </div>
+            <div class="hang-nut">
+              <button id="nutTruoc" class="nut">← Từ trước</button>
+              <button id="nutNgauNhien" class="nut">Ngẫu nhiên</button>
+              <button id="nutTiep" class="nut">Từ tiếp theo →</button>
+            </div>
+            <p id="dem" class="dem"></p>
+          </div>
+        </section>
 
-    nutTruoc.addEventListener('click', () => {
-      viTri = viTri - 1
-      if (viTri === -1) {
-        viTri = boTu.length - 1
-      }
-      hienTu()
-    })
+      </main>
+    </div>
 
-    nutNgauNhien.addEventListener('click', () => {
-      viTri = Math.floor(Math.random() * boTu.length)
-      hienTu()
-    })
-
-    // Đếm số lần tìm. Vì tìm trong file từ điển cần một chút thời gian, nếu gõ nhanh
-    // thì kết quả của lần gõ CŨ có thể về SAU lần gõ mới. Nhờ con số này ta bỏ qua kết quả cũ.
-    let lanTim = 0
-
-    // Mỗi lần gõ (hoặc xoá) một ký tự trong ô tìm kiếm thì chạy đoạn này.
-    // Chữ "async" cho phép dùng "await" bên trong để chờ kết quả từ từ điển.
-    oTim.addEventListener('input', async () => {
-      // Lấy chữ đang gõ, bỏ khoảng trắng 2 đầu
-      const tuKhoa = oTim.value.trim()
-      lanTim = lanTim + 1
-      const lanNay = lanTim   // ghi nhớ đây là lần tìm thứ mấy
-
-      // Ô tìm kiếm trống thì xoá kết quả và dừng luôn ở đây
-      if (tuKhoa === '') {
-        ketQua.innerHTML = ''
-        return
-      }
-
-      // Nhờ main.js tìm trong data/tu-dien.db (qua cầu nối window.tuDien ở preload.js),
-      // "await" = đứng chờ đến khi có kết quả rồi mới chạy dòng tiếp theo
-      const timDuoc = await window.tuDien.tim(tuKhoa)
-
-      // Trong lúc chờ mà người dùng đã gõ thêm chữ khác → kết quả này đã cũ, bỏ qua
-      if (lanNay !== lanTim) {
-        return
-      }
-
-      // Xoá danh sách kết quả cũ trước khi hiện kết quả mới
-      ketQua.innerHTML = ''
-
-      // Không tìm được từ nào thì báo "Không tìm thấy" rồi dừng
-      if (timDuoc.length === 0) {
-        const dong = document.createElement('li')  // tạo một dòng mới
-        dong.textContent = 'Không tìm thấy'        // ghi chữ vào dòng
-        dong.style.cursor = 'default'              // dòng này không bấm được
-        ketQua.appendChild(dong)                   // gắn dòng vào danh sách
-        return
-      }
-
-      // Với mỗi từ tìm được, tạo một dòng trong danh sách
-      timDuoc.forEach((tu) => {
-        const dong = document.createElement('li')                           // tạo một dòng mới
-        dong.textContent = tu.gian_the + ' ' + tu.pinyin + ' — ' + tu.nghia  // ví dụ: 学习 xue2 xi2 — học; tìm hiểu
-        // Khi bấm vào dòng này thì hiện tạm từ đó lên thẻ chính
-        // (bấm "Từ tiếp theo" / "Từ trước" sẽ quay lại bộ 10 từ như cũ)
-        dong.addEventListener('click', () => {
-          chu.textContent = tu.gian_the                   // chữ Hán giản thể
-          nghia.textContent = tu.pinyin + ' — ' + tu.nghia // pinyin và nghĩa (ẩn sẵn)
-          nghia.style.visibility = 'hidden'
-          nutXem.textContent = 'Xem nghĩa'
-          dem.textContent = 'Từ tra cứu'                  // cho biết từ này không thuộc bộ 10 từ
-          oTim.value = ''            // xoá chữ trong ô tìm kiếm
-          ketQua.innerHTML = ''      // ẩn danh sách kết quả
-        })
-        ketQua.appendChild(dong)     // gắn dòng vào danh sách
-      })
-    })
-
-    hienTu()
-  </script>
-</body>
+    <!-- Toàn bộ code JavaScript của giao diện nằm trong renderer.js -->
+    <script src="renderer.js"></script>
+  </body>
 </html>
