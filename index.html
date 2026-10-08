@@ -131,34 +131,35 @@
       hienTu()
     })
 
-    // Đổi chuỗi về dạng chữ thường, không dấu để so sánh cho dễ
-    function boDau(chuoi) {
-      return chuoi
-        .toLowerCase()                    // đổi sang chữ thường
-        .normalize('NFD')                 // tách dấu ra khỏi chữ: "é" thành "e" + dấu sắc
-        .replace(/[̀-ͯ]/g, '')  // xoá các dấu vừa tách ra
-        .replace(/đ/g, 'd')               // "đ" không tách được bằng NFD nên đổi riêng
-    }
+    // Đếm số lần tìm. Vì tìm trong file từ điển cần một chút thời gian, nếu gõ nhanh
+    // thì kết quả của lần gõ CŨ có thể về SAU lần gõ mới. Nhờ con số này ta bỏ qua kết quả cũ.
+    let lanTim = 0
 
-    // Mỗi lần gõ (hoặc xoá) một ký tự trong ô tìm kiếm thì chạy đoạn này
-    oTim.addEventListener('input', () => {
-      // Lấy chữ đang gõ, bỏ khoảng trắng 2 đầu, đổi sang chữ thường không dấu
-      const tuKhoa = boDau(oTim.value.trim())
+    // Mỗi lần gõ (hoặc xoá) một ký tự trong ô tìm kiếm thì chạy đoạn này.
+    // Chữ "async" cho phép dùng "await" bên trong để chờ kết quả từ từ điển.
+    oTim.addEventListener('input', async () => {
+      // Lấy chữ đang gõ, bỏ khoảng trắng 2 đầu
+      const tuKhoa = oTim.value.trim()
+      lanTim = lanTim + 1
+      const lanNay = lanTim   // ghi nhớ đây là lần tìm thứ mấy
 
-      // Xoá danh sách kết quả cũ trước khi hiện kết quả mới
-      ketQua.innerHTML = ''
-
-      // Ô tìm kiếm trống thì không hiện gì cả, dừng luôn ở đây
+      // Ô tìm kiếm trống thì xoá kết quả và dừng luôn ở đây
       if (tuKhoa === '') {
+        ketQua.innerHTML = ''
         return
       }
 
-      // Giữ lại những từ có chữ Hán, pinyin hoặc nghĩa chứa từ khoá
-      const timDuoc = boTu.filter((tu) => {
-        return tu.chu.includes(tuKhoa) ||                     // khớp chữ Hán
-               boDau(tu.pinyin).includes(tuKhoa) ||           // khớp pinyin (không dấu)
-               boDau(tu.nghia).includes(tuKhoa)               // khớp nghĩa (không dấu)
-      })
+      // Nhờ main.js tìm trong data/tu-dien.db (qua cầu nối window.tuDien ở preload.js),
+      // "await" = đứng chờ đến khi có kết quả rồi mới chạy dòng tiếp theo
+      const timDuoc = await window.tuDien.tim(tuKhoa)
+
+      // Trong lúc chờ mà người dùng đã gõ thêm chữ khác → kết quả này đã cũ, bỏ qua
+      if (lanNay !== lanTim) {
+        return
+      }
+
+      // Xoá danh sách kết quả cũ trước khi hiện kết quả mới
+      ketQua.innerHTML = ''
 
       // Không tìm được từ nào thì báo "Không tìm thấy" rồi dừng
       if (timDuoc.length === 0) {
@@ -172,11 +173,15 @@
       // Với mỗi từ tìm được, tạo một dòng trong danh sách
       timDuoc.forEach((tu) => {
         const dong = document.createElement('li')                           // tạo một dòng mới
-        dong.textContent = tu.chu + '  ' + tu.pinyin + ' — ' + tu.nghia     // ghi chữ Hán, pinyin, nghĩa
-        // Khi bấm vào dòng này thì thẻ chính nhảy tới từ đó
+        dong.textContent = tu.gian_the + ' ' + tu.pinyin + ' — ' + tu.nghia  // ví dụ: 学习 xue2 xi2 — học; tìm hiểu
+        // Khi bấm vào dòng này thì hiện tạm từ đó lên thẻ chính
+        // (bấm "Từ tiếp theo" / "Từ trước" sẽ quay lại bộ 10 từ như cũ)
         dong.addEventListener('click', () => {
-          viTri = boTu.indexOf(tu)   // tìm vị trí của từ này trong mảng boTu gốc
-          hienTu()                   // hiện từ đó lên thẻ chính
+          chu.textContent = tu.gian_the                   // chữ Hán giản thể
+          nghia.textContent = tu.pinyin + ' — ' + tu.nghia // pinyin và nghĩa (ẩn sẵn)
+          nghia.style.visibility = 'hidden'
+          nutXem.textContent = 'Xem nghĩa'
+          dem.textContent = 'Từ tra cứu'                  // cho biết từ này không thuộc bộ 10 từ
           oTim.value = ''            // xoá chữ trong ô tìm kiếm
           ketQua.innerHTML = ''      // ẩn danh sách kết quả
         })
