@@ -149,7 +149,7 @@ function taoNutLuu(tu) {
 
   // Khoá nút trong lúc hỏi sổ từ xem từ này đã lưu chưa (để không bấm nhầm khi chưa rõ)
   nut.disabled = true
-  window.soTu.daLuu(tu.gian_the, tu.pinyin).then((daLuu) => {
+  window.soTu.daLuu(tu).then((daLuu) => {
     // Trong lúc chờ, người dùng có thể đã chuyển sang từ khác và nút này đã bị xoá khỏi trang.
     // isConnected = false nghĩa là nút không còn trên trang → không cần làm gì nữa.
     if (!nut.isConnected) return

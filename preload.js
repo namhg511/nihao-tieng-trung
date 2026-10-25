@@ -10,6 +10,6 @@ contextBridge.exposeInMainWorld('tuDien', {
 contextBridge.exposeInMainWorld('soTu', {
   // Lưu một từ vào sổ (tu gồm gian_the, phon_the, pinyin, nghia)
   luu: (tu) => ipcRenderer.invoke('so-tu:luu', tu),
-  // Hỏi xem từ (giản thể + pinyin) đã có trong sổ chưa → Promise chứa true / false
-  daLuu: (gianThe, pinyin) => ipcRenderer.invoke('so-tu:da-luu', gianThe, pinyin),
+  // Hỏi xem từ (giản thể + phồn thể + pinyin) đã có trong sổ chưa → Promise chứa true / false
+  daLuu: (tu) => ipcRenderer.invoke('so-tu:da-luu', tu),
 })

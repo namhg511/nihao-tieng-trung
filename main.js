@@ -18,21 +18,51 @@ const db = new DatabaseSync(path.join(__dirname, 'data', 'tu-dien.db'), { readOn
 // =====================================================================
 const soTuDb = new DatabaseSync(path.join(app.getPath('userData'), 'so-tu.db'))
 
+// Câu lệnh tạo bảng sổ từ, viết thành hàm để dùng lại khi cần tạo bảng tên khác (xem phần nâng cấp).
+// UNIQUE (gian_the, phon_the, pinyin): không cho có 2 hàng trùng CẢ giản thể, phồn thể LẪN pinyin.
+//   行 [xing2] (đi) và 行 [hang2] (hàng) khác pinyin       → lưu được cả hai.
+//   后 [hou4] (hoàng hậu) và 後 [hou4] (sau) khác phồn thể → lưu được cả hai.
+//   Lưu 行 [xing2] lần thứ hai                             → SQLite từ chối.
+function lenhTaoBangSoTu(tenBang) {
+  return `
+    CREATE TABLE IF NOT EXISTS ${tenBang} (
+      id        INTEGER PRIMARY KEY,
+      gian_the  TEXT NOT NULL,
+      phon_the  TEXT NOT NULL,
+      pinyin    TEXT NOT NULL,
+      nghia     TEXT NOT NULL,
+      ngay_luu  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),  -- ví dụ "2026-10-25 14:30:05"
+      UNIQUE (gian_the, phon_the, pinyin)
+    )
+  `
+}
+
 // "IF NOT EXISTS": chỉ tạo bảng nếu chưa có — mở app lần sau thì bỏ qua, dữ liệu cũ vẫn còn.
-// UNIQUE (gian_the, pinyin): không cho có 2 hàng trùng CẢ giản thể LẪN pinyin.
-//   行 [xing2] (đi) và 行 [hang2] (hàng) khác pinyin → lưu được cả hai.
-//   Lưu 行 [xing2] lần thứ hai → SQLite từ chối.
-soTuDb.exec(`
-  CREATE TABLE IF NOT EXISTS so_tu (
-    id        INTEGER PRIMARY KEY,
-    gian_the  TEXT NOT NULL,
-    phon_the  TEXT NOT NULL,
-    pinyin    TEXT NOT NULL,
-    nghia     TEXT NOT NULL,
-    ngay_luu  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),  -- ví dụ "2026-10-25 14:30:05"
-    UNIQUE (gian_the, pinyin)
-  )
-`)
+soTuDb.exec(lenhTaoBangSoTu('so_tu'))
+
+// NÂNG CẤP FILE CŨ. Bản đầu tiên của bảng dùng khoá UNIQUE (gian_the, pinyin).
+// SQLite không cho sửa UNIQUE của bảng có sẵn, nên phải: tạo bảng mới đúng khoá → chép dữ liệu
+// sang → xoá bảng cũ → đổi tên bảng mới. Từ đã lưu vẫn còn nguyên.
+// "user_version" là một con số SQLite để dành cho ta ghi phiên bản của file (mặc định là 0).
+// Nâng cấp xong ghi số 1 vào đó, nên những lần mở sau sẽ không chạy lại đoạn này.
+const phienBanSoTu = soTuDb.prepare('PRAGMA user_version').get().user_version
+if (phienBanSoTu < 1) {
+  soTuDb.exec('BEGIN')
+  try {
+    soTuDb.exec(lenhTaoBangSoTu('so_tu_moi'))
+    soTuDb.exec(`
+      INSERT OR IGNORE INTO so_tu_moi (id, gian_the, phon_the, pinyin, nghia, ngay_luu)
+      SELECT id, gian_the, phon_the, pinyin, nghia, ngay_luu FROM so_tu
+    `)
+    soTuDb.exec('DROP TABLE so_tu')
+    soTuDb.exec('ALTER TABLE so_tu_moi RENAME TO so_tu')
+    soTuDb.exec('PRAGMA user_version = 1')
+    soTuDb.exec('COMMIT')
+  } catch (loi) {
+    soTuDb.exec('ROLLBACK')   // có lỗi thì huỷ hết, file giữ nguyên như trước
+    throw loi
+  }
+}
 
 // Lưu một từ. "OR IGNORE": nếu từ đã có (vi phạm UNIQUE) thì lặng lẽ bỏ qua thay vì báo lỗi.
 // Không ghi cột ngay_luu — SQLite tự điền giá trị DEFAULT (giờ hiện tại).
@@ -43,7 +73,7 @@ const lenhLuuTu = soTuDb.prepare(`
 
 // Kiểm tra một từ đã có trong sổ chưa (có hàng nào thì trả về 1, không thì không trả về gì)
 const lenhKiemTraDaLuu = soTuDb.prepare(`
-  SELECT 1 FROM so_tu WHERE gian_the = ? AND pinyin = ?
+  SELECT 1 FROM so_tu WHERE gian_the = ? AND phon_the = ? AND pinyin = ?
 `)
 
 // Giao diện gửi sang có thể là bất cứ thứ gì → ép về chuỗi cho chắc
@@ -57,9 +87,9 @@ ipcMain.handle('so-tu:luu', (suKien, tu) => {
   return true
 })
 
-// Dịch vụ 'so-tu:da-luu': từ này (giản thể + pinyin) đã có trong sổ chưa? → true / false
-ipcMain.handle('so-tu:da-luu', (suKien, gianThe, pinyin) => {
-  return lenhKiemTraDaLuu.get(chuoi(gianThe), chuoi(pinyin)) !== undefined
+// Dịch vụ 'so-tu:da-luu': từ này (giản thể + phồn thể + pinyin) đã có trong sổ chưa? → true / false
+ipcMain.handle('so-tu:da-luu', (suKien, tu) => {
+  return lenhKiemTraDaLuu.get(chuoi(tu.gian_the), chuoi(tu.phon_the), chuoi(tu.pinyin)) !== undefined
 })
 
 // =====================================================================
