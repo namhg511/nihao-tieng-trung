@@ -87,8 +87,13 @@ cacMucMenu.forEach((muc) => {
     document.querySelectorAll('.trang').forEach((t) => t.classList.remove('dang-hien'))
     document.getElementById('trang-' + muc.dataset.trang).classList.add('dang-hien')
 
-    // Quay về trang Tra từ thì đặt sẵn con trỏ vào ô tìm để gõ được ngay
-    if (muc.dataset.trang === 'tra-tu') oTim.focus()
+    // Quay về trang Tra từ thì đặt sẵn con trỏ vào ô tìm để gõ được ngay.
+    // Từ đang hiện có thể vừa được lưu / bỏ lưu ở trang Sổ từ → hỏi lại sổ để nút Lưu hiện đúng.
+    if (muc.dataset.trang === 'tra-tu') {
+      oTim.focus()
+      const nutLuu = chiTiet.querySelector('.nut-luu')
+      if (nutLuu) dongBoNutLuu(nutLuu, danhSachTu[chiSoChon])
+    }
 
     // Mở trang Sổ từ thì đọc lại sổ, vì có thể vừa lưu thêm từ ở trang Tra từ
     if (muc.dataset.trang === 'so-tu') taiSoTu()
@@ -119,7 +124,8 @@ function hienLoiNhan(khung, chuHan, dong1, dong2) {
 }
 
 // Hiện chi tiết của một từ vào khung
-function hienChiTiet(khung, tu) {
+// khiDoi: chuyển tiếp cho nút Lưu (xem taoNutLuu), trang Tra từ không cần nên bỏ trống
+function hienChiTiet(khung, tu, khiDoi) {
   khung.innerHTML = ''
 
   khung.appendChild(taoThe('div', 'chu-han chu-to', tu.gian_the))          // chữ Hán rất to
@@ -132,7 +138,7 @@ function hienChiTiet(khung, tu) {
     khung.appendChild(dongPhonThe)
   }
 
-  khung.appendChild(taoNutLuu(tu))
+  khung.appendChild(taoNutLuu(tu, khiDoi))
 
   // Các nghĩa: tách theo dấu ";" và hiện thành danh sách đánh số (thẻ <ol>)
   const danhSachNghia = taoThe('ol', 'danh-sach-nghia')
@@ -158,40 +164,47 @@ function taoDongTu(tu) {
   return dong
 }
 
-// Đổi nút sang trạng thái "đã lưu": đổi chữ, đổi màu, khoá nút (bước này chưa có bỏ lưu)
-function datNutDaLuu(nut) {
-  nut.textContent = '★ Đã lưu'
-  nut.classList.add('da-luu')
-  nut.disabled = true
+// Vẽ nút theo trạng thái: đã lưu → "★ Đã lưu" (nền hồng), chưa lưu → "☆ Lưu"
+function veNutLuu(nut, daLuu) {
+  nut.textContent = daLuu ? '★ Đã lưu' : '☆ Lưu'
+  nut.title = daLuu ? 'Bấm để bỏ lưu' : 'Bấm để lưu vào sổ từ'   // chữ hiện khi rê chuột
+  nut.classList.toggle('da-luu', daLuu)   // toggle(lớp, true/false): thêm hoặc gỡ lớp CSS
 }
 
-// Tạo nút "☆ Lưu" cho một từ
-function taoNutLuu(tu) {
-  const nut = taoThe('button', 'nut nut-luu', '☆ Lưu')
-
-  // Khoá nút trong lúc hỏi sổ từ xem từ này đã lưu chưa (để không bấm nhầm khi chưa rõ)
+// Hỏi sổ từ xem từ này đã lưu chưa, rồi vẽ nút cho đúng.
+// Gọi khi vừa tạo nút, và khi quay lại một trang mà sổ từ có thể đã bị đổi ở trang khác.
+async function dongBoNutLuu(nut, tu) {
+  // Khoá nút trong lúc hỏi (để không bấm nhầm khi chưa rõ trạng thái)
   nut.disabled = true
-  window.soTu.daLuu(tu).then((daLuu) => {
-    // Trong lúc chờ, người dùng có thể đã chuyển sang từ khác và nút này đã bị xoá khỏi trang.
-    // isConnected = false nghĩa là nút không còn trên trang → không cần làm gì nữa.
-    if (!nut.isConnected) return
-    if (daLuu) {
-      datNutDaLuu(nut)
-    } else {
-      nut.disabled = false
-    }
-  })
+  const daLuu = await window.soTu.daLuu(tu)
+  // Trong lúc chờ, người dùng có thể đã chuyển sang từ khác và nút này đã bị xoá khỏi trang.
+  // isConnected = false nghĩa là nút không còn trên trang → không cần làm gì nữa.
+  if (!nut.isConnected) return
+  veNutLuu(nut, daLuu)
+  nut.disabled = false
+}
+
+// Tạo nút Lưu / Bỏ lưu cho một từ. Bấm lần nữa thì đảo trạng thái.
+// Trạng thái hiện tại chỉ nằm ở MỘT chỗ: lớp CSS "da-luu" trên nút (do veNutLuu đặt).
+// khiDoi (không bắt buộc): hàm được gọi sau mỗi lần lưu / bỏ lưu thành công,
+// để trang Sổ từ cập nhật danh sách của nó.
+function taoNutLuu(tu, khiDoi) {
+  const nut = taoThe('button', 'nut nut-luu', '☆ Lưu')
+  dongBoNutLuu(nut, tu)
 
   nut.addEventListener('click', async () => {
-    nut.disabled = true   // chặn bấm 2 lần liên tiếp
+    nut.disabled = true   // chặn bấm 2 lần liên tiếp trong lúc đang ghi
     try {
-      await window.soTu.luu(tu)
-      datNutDaLuu(nut)
+      // Đang lưu → bỏ lưu; chưa lưu → lưu. Cả hai hàm đều trả về trạng thái mới.
+      const dangLuu = nut.classList.contains('da-luu')
+      const daLuu = dangLuu ? await window.soTu.boLuu(tu) : await window.soTu.luu(tu)
+      veNutLuu(nut, daLuu)
+      if (khiDoi) khiDoi(daLuu)
     } catch (loi) {
-      nut.disabled = false   // lưu hỏng thì mở lại nút để bấm thử lần nữa
-      console.error('Không lưu được từ:', loi)
+      console.error('Không cập nhật được sổ từ:', loi)   // lỗi thì nút giữ nguyên trạng thái cũ
     }
-    oTim.focus()   // trả con trỏ về ô tìm để vẫn dùng được phím ↑ ↓
+    nut.disabled = false
+    oTim.focus()   // trả con trỏ về ô tìm để vẫn dùng được phím ↑ ↓ (trang khác thì không có tác dụng)
   })
 
   return nut
@@ -291,7 +304,19 @@ const soTuTrong = document.getElementById('soTuTrong')
 function chonTuTrongSo(dong, tu) {
   dsSoTu.querySelectorAll('.dang-chon').forEach((d) => d.classList.remove('dang-chon'))
   dong.classList.add('dang-chon')
-  hienChiTiet(chiTietSoTu, tu)
+
+  // Bỏ lưu ở đây thì dòng chưa biến mất ngay mà chỉ mờ đi (lớp "da-bo-luu"),
+  // để lỡ tay còn bấm "☆ Lưu" lại được. Lần sau mở trang Sổ từ thì dòng đó mới mất hẳn.
+  hienChiTiet(chiTietSoTu, tu, (daLuu) => {
+    dong.classList.toggle('da-bo-luu', !daLuu)
+    capNhatTieuDeSoTu()
+  })
+}
+
+// Ghi số từ lên tiêu đề: đếm các dòng KHÔNG bị bỏ lưu
+function capNhatTieuDeSoTu() {
+  const soTu = dsSoTu.querySelectorAll('.dong-ket-qua:not(.da-bo-luu)').length
+  tieuDeSoTu.textContent = 'Sổ từ (' + soTu + ' từ)'
 }
 
 // Đọc sổ từ (qua main.js) rồi vẽ lại cả trang

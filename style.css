@@ -274,13 +274,16 @@ svg {
 /* Nút bị khoá trong chốc lát lúc đang kiểm tra / đang lưu */
 .nut-luu:disabled { cursor: default; opacity: 0.6; }
 
-/* Đã lưu: nền hồng nhạt, viền đỏ, không mờ đi như nút khoá thường */
-.nut-luu.da-luu,
-.nut-luu.da-luu:hover {
-  opacity: 1;
+/* Đã lưu: nền hồng nhạt, viền đỏ. Rê chuột vào thì đậm hơn một chút (bấm được để bỏ lưu) */
+.nut-luu.da-luu {
   background: var(--mau-chon);
   border-color: var(--mau-chinh);
 }
+
+.nut-luu.da-luu:hover { background: #f3d2c1; }
+
+/* Trang Sổ từ: dòng vừa bị bỏ lưu thì mờ đi */
+.dong-ket-qua.da-bo-luu { opacity: 0.45; }
 
 .danh-sach-nghia {
   margin: 24px 0 0;
