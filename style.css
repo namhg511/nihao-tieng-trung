@@ -263,6 +263,25 @@ svg {
 
 .phon-the .chu-han { font-size: 18px; color: var(--mau-chu); }
 
+/* Nút "☆ Lưu" / "★ Đã lưu" trong khung chi tiết */
+.nut-luu {
+  margin-top: 16px;
+  padding: 6px 14px;
+  font-size: 14px;
+  color: var(--mau-chinh);
+}
+
+/* Nút bị khoá trong chốc lát lúc đang kiểm tra / đang lưu */
+.nut-luu:disabled { cursor: default; opacity: 0.6; }
+
+/* Đã lưu: nền hồng nhạt, viền đỏ, không mờ đi như nút khoá thường */
+.nut-luu.da-luu,
+.nut-luu.da-luu:hover {
+  opacity: 1;
+  background: var(--mau-chon);
+  border-color: var(--mau-chinh);
+}
+
 .danh-sach-nghia {
   margin: 24px 0 0;
   padding-left: 22px;

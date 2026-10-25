@@ -11,6 +11,61 @@ const SO_KET_QUA_TOI_DA = 50
 // (File này được tạo bằng lệnh: npm run build-db)
 const db = new DatabaseSync(path.join(__dirname, 'data', 'tu-dien.db'), { readOnly: true })
 
+// =====================================================================
+// SỔ TỪ VỰNG: file SQLite RIÊNG (so-tu.db), nằm trong thư mục dữ liệu của người dùng.
+// app.getPath('userData') trên Windows là C:\Users\<tên>\AppData\Roaming\nihao-tieng-trung
+// File tự được tạo ở lần mở app đầu tiên. Đây là file duy nhất app được GHI vào.
+// =====================================================================
+const soTuDb = new DatabaseSync(path.join(app.getPath('userData'), 'so-tu.db'))
+
+// "IF NOT EXISTS": chỉ tạo bảng nếu chưa có — mở app lần sau thì bỏ qua, dữ liệu cũ vẫn còn.
+// UNIQUE (gian_the, pinyin): không cho có 2 hàng trùng CẢ giản thể LẪN pinyin.
+//   行 [xing2] (đi) và 行 [hang2] (hàng) khác pinyin → lưu được cả hai.
+//   Lưu 行 [xing2] lần thứ hai → SQLite từ chối.
+soTuDb.exec(`
+  CREATE TABLE IF NOT EXISTS so_tu (
+    id        INTEGER PRIMARY KEY,
+    gian_the  TEXT NOT NULL,
+    phon_the  TEXT NOT NULL,
+    pinyin    TEXT NOT NULL,
+    nghia     TEXT NOT NULL,
+    ngay_luu  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),  -- ví dụ "2026-10-25 14:30:05"
+    UNIQUE (gian_the, pinyin)
+  )
+`)
+
+// Lưu một từ. "OR IGNORE": nếu từ đã có (vi phạm UNIQUE) thì lặng lẽ bỏ qua thay vì báo lỗi.
+// Không ghi cột ngay_luu — SQLite tự điền giá trị DEFAULT (giờ hiện tại).
+const lenhLuuTu = soTuDb.prepare(`
+  INSERT OR IGNORE INTO so_tu (gian_the, phon_the, pinyin, nghia)
+  VALUES (?, ?, ?, ?)
+`)
+
+// Kiểm tra một từ đã có trong sổ chưa (có hàng nào thì trả về 1, không thì không trả về gì)
+const lenhKiemTraDaLuu = soTuDb.prepare(`
+  SELECT 1 FROM so_tu WHERE gian_the = ? AND pinyin = ?
+`)
+
+// Giao diện gửi sang có thể là bất cứ thứ gì → ép về chuỗi cho chắc
+function chuoi(giaTri) {
+  return String(giaTri ?? '')
+}
+
+// Dịch vụ 'so-tu:luu': lưu từ vào sổ, trả về true khi từ đã nằm trong sổ
+ipcMain.handle('so-tu:luu', (suKien, tu) => {
+  lenhLuuTu.run(chuoi(tu.gian_the), chuoi(tu.phon_the), chuoi(tu.pinyin), chuoi(tu.nghia))
+  return true
+})
+
+// Dịch vụ 'so-tu:da-luu': từ này (giản thể + pinyin) đã có trong sổ chưa? → true / false
+ipcMain.handle('so-tu:da-luu', (suKien, gianThe, pinyin) => {
+  return lenhKiemTraDaLuu.get(chuoi(gianThe), chuoi(pinyin)) !== undefined
+})
+
+// =====================================================================
+// TRA TỪ ĐIỂN (tu-dien.db, chỉ đọc)
+// =====================================================================
+
 // Chuẩn bị sẵn 3 câu lệnh tìm kiếm (prepared statement), dùng lại cho mọi lần tìm.
 // Dấu ? là chỗ trống, lúc chạy mới điền từ khoá vào — không ghép chuỗi trực tiếp vào SQL.
 // ORDER BY length(...) để từ ngắn (khớp sát nhất) hiện lên trước.

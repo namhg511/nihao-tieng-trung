@@ -126,12 +126,53 @@ function hienChiTiet(tu) {
     chiTiet.appendChild(dongPhonThe)
   }
 
+  chiTiet.appendChild(taoNutLuu(tu))
+
   // Các nghĩa: tách theo dấu ";" và hiện thành danh sách đánh số (thẻ <ol>)
   const danhSachNghia = taoThe('ol', 'danh-sach-nghia')
   tu.nghia.split(';').map((n) => n.trim()).filter((n) => n !== '').forEach((n) => {
     danhSachNghia.appendChild(taoThe('li', '', n))
   })
   chiTiet.appendChild(danhSachNghia)
+}
+
+// Đổi nút sang trạng thái "đã lưu": đổi chữ, đổi màu, khoá nút (bước này chưa có bỏ lưu)
+function datNutDaLuu(nut) {
+  nut.textContent = '★ Đã lưu'
+  nut.classList.add('da-luu')
+  nut.disabled = true
+}
+
+// Tạo nút "☆ Lưu" cho một từ
+function taoNutLuu(tu) {
+  const nut = taoThe('button', 'nut nut-luu', '☆ Lưu')
+
+  // Khoá nút trong lúc hỏi sổ từ xem từ này đã lưu chưa (để không bấm nhầm khi chưa rõ)
+  nut.disabled = true
+  window.soTu.daLuu(tu.gian_the, tu.pinyin).then((daLuu) => {
+    // Trong lúc chờ, người dùng có thể đã chuyển sang từ khác và nút này đã bị xoá khỏi trang.
+    // isConnected = false nghĩa là nút không còn trên trang → không cần làm gì nữa.
+    if (!nut.isConnected) return
+    if (daLuu) {
+      datNutDaLuu(nut)
+    } else {
+      nut.disabled = false
+    }
+  })
+
+  nut.addEventListener('click', async () => {
+    nut.disabled = true   // chặn bấm 2 lần liên tiếp
+    try {
+      await window.soTu.luu(tu)
+      datNutDaLuu(nut)
+    } catch (loi) {
+      nut.disabled = false   // lưu hỏng thì mở lại nút để bấm thử lần nữa
+      console.error('Không lưu được từ:', loi)
+    }
+    oTim.focus()   // trả con trỏ về ô tìm để vẫn dùng được phím ↑ ↓
+  })
+
+  return nut
 }
 
 // Chọn từ thứ "chiSo" trong danh sách: tô nền dòng đó và hiện chi tiết bên phải
