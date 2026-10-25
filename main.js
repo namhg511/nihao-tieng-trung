@@ -76,6 +76,14 @@ const lenhKiemTraDaLuu = soTuDb.prepare(`
   SELECT 1 FROM so_tu WHERE gian_the = ? AND phon_the = ? AND pinyin = ?
 `)
 
+// Lấy toàn bộ sổ từ, mới lưu nhất lên đầu.
+// DESC = giảm dần (mới → cũ). Hai từ lưu trong cùng một giây thì ngay_luu bằng nhau,
+// nên xếp thêm theo id giảm dần (id do SQLite tự tăng, từ lưu sau có id lớn hơn).
+const lenhLaySoTu = soTuDb.prepare(`
+  SELECT gian_the, phon_the, pinyin, nghia, ngay_luu FROM so_tu
+  ORDER BY ngay_luu DESC, id DESC
+`)
+
 // Giao diện gửi sang có thể là bất cứ thứ gì → ép về chuỗi cho chắc
 function chuoi(giaTri) {
   return String(giaTri ?? '')
@@ -90,6 +98,11 @@ ipcMain.handle('so-tu:luu', (suKien, tu) => {
 // Dịch vụ 'so-tu:da-luu': từ này (giản thể + phồn thể + pinyin) đã có trong sổ chưa? → true / false
 ipcMain.handle('so-tu:da-luu', (suKien, tu) => {
   return lenhKiemTraDaLuu.get(chuoi(tu.gian_the), chuoi(tu.phon_the), chuoi(tu.pinyin)) !== undefined
+})
+
+// Dịch vụ 'so-tu:danh-sach': trả về mọi từ trong sổ (mảng rỗng nếu sổ trống)
+ipcMain.handle('so-tu:danh-sach', () => {
+  return lenhLaySoTu.all()
 })
 
 // =====================================================================

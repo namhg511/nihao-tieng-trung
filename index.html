@@ -24,11 +24,11 @@
           <svg viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>
           Ôn tập
         </button>
-        <!-- disabled: nút bị khoá, bấm không làm gì -->
-        <button class="muc-menu" disabled>
+        <button class="muc-menu" data-trang="so-tu">
           <svg viewBox="0 0 24 24"><path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z"/><path d="M8 9h8M8 13h6"/></svg>
-          Sổ từ <span class="nhan-sap-co">Sắp có</span>
+          Sổ từ
         </button>
+        <!-- disabled: nút bị khoá, bấm không làm gì -->
         <button class="muc-menu" disabled>
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>
           Cài đặt <span class="nhan-sap-co">Sắp có</span>
@@ -51,6 +51,20 @@
             <ul id="ketQua" class="the danh-sach"></ul>
             <div id="chiTiet" class="the chi-tiet"></div>
           </div>
+        </section>
+
+        <!-- ----- Trang SỔ TỪ ----- -->
+        <section id="trang-so-tu" class="trang trang-so-tu">
+          <h1 id="tieuDeSoTu" class="tieu-de-trang">Sổ từ</h1>
+
+          <!-- Có từ: 2 cột giống trang Tra từ — danh sách | chi tiết -->
+          <div id="khungSoTu" class="khung-tra">
+            <ul id="dsSoTu" class="the danh-sach"></ul>
+            <div id="chiTietSoTu" class="the chi-tiet"></div>
+          </div>
+
+          <!-- Sổ trống: chỉ hiện một khung hướng dẫn (hidden = đang ẩn) -->
+          <div id="soTuTrong" class="the so-tu-trong" hidden></div>
         </section>
 
         <!-- ----- Trang ÔN TẬP (flashcard) ----- -->

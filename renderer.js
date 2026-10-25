@@ -89,6 +89,9 @@ cacMucMenu.forEach((muc) => {
 
     // Quay về trang Tra từ thì đặt sẵn con trỏ vào ô tìm để gõ được ngay
     if (muc.dataset.trang === 'tra-tu') oTim.focus()
+
+    // Mở trang Sổ từ thì đọc lại sổ, vì có thể vừa lưu thêm từ ở trang Tra từ
+    if (muc.dataset.trang === 'so-tu') taiSoTu()
   })
 })
 
@@ -102,38 +105,57 @@ let danhSachTu = []   // các từ tìm được ở lần tìm gần nhất
 let chiSoChon = -1    // vị trí của từ đang chọn trong danhSachTu (-1 = chưa chọn gì)
 let lanTim = 0        // đếm số lần tìm, để bỏ qua kết quả cũ về muộn khi gõ nhanh
 
-// Hiện một lời nhắn ở cột chi tiết (dùng khi ô trống hoặc không tìm thấy)
-function hienLoiNhan(chuHan, dong1, dong2) {
-  chiTiet.innerHTML = ''
-  const khung = taoThe('div', 'loi-nhan')
-  khung.appendChild(taoThe('div', 'chu-han', chuHan))
-  khung.appendChild(taoThe('div', '', dong1))
-  if (dong2) khung.appendChild(taoThe('div', '', dong2))
-  chiTiet.appendChild(khung)
+// Hai hàm dưới đây nhận thêm tham số "khung" = vẽ vào ô nào trên trang.
+// Nhờ vậy trang Tra từ (chiTiet) và trang Sổ từ (chiTietSoTu) dùng chung được một hàm.
+
+// Hiện một lời nhắn vào khung (dùng khi ô trống, không tìm thấy, sổ trống...)
+function hienLoiNhan(khung, chuHan, dong1, dong2) {
+  khung.innerHTML = ''
+  const loiNhan = taoThe('div', 'loi-nhan')
+  loiNhan.appendChild(taoThe('div', 'chu-han', chuHan))
+  loiNhan.appendChild(taoThe('div', '', dong1))
+  if (dong2) loiNhan.appendChild(taoThe('div', '', dong2))
+  khung.appendChild(loiNhan)
 }
 
-// Hiện chi tiết của một từ ở cột phải
-function hienChiTiet(tu) {
-  chiTiet.innerHTML = ''
+// Hiện chi tiết của một từ vào khung
+function hienChiTiet(khung, tu) {
+  khung.innerHTML = ''
 
-  chiTiet.appendChild(taoThe('div', 'chu-han chu-to', tu.gian_the))          // chữ Hán rất to
-  chiTiet.appendChild(taoThe('div', 'pinyin-to', doiPinyinSangDau(tu.pinyin))) // pinyin có dấu
+  khung.appendChild(taoThe('div', 'chu-han chu-to', tu.gian_the))          // chữ Hán rất to
+  khung.appendChild(taoThe('div', 'pinyin-to', doiPinyinSangDau(tu.pinyin))) // pinyin có dấu
 
   // Chữ phồn thể: chỉ hiện khi khác chữ giản thể
   if (tu.phon_the !== tu.gian_the) {
     const dongPhonThe = taoThe('div', 'phon-the', 'Phồn thể: ')
     dongPhonThe.appendChild(taoThe('span', 'chu-han', tu.phon_the))
-    chiTiet.appendChild(dongPhonThe)
+    khung.appendChild(dongPhonThe)
   }
 
-  chiTiet.appendChild(taoNutLuu(tu))
+  khung.appendChild(taoNutLuu(tu))
 
   // Các nghĩa: tách theo dấu ";" và hiện thành danh sách đánh số (thẻ <ol>)
   const danhSachNghia = taoThe('ol', 'danh-sach-nghia')
   tu.nghia.split(';').map((n) => n.trim()).filter((n) => n !== '').forEach((n) => {
     danhSachNghia.appendChild(taoThe('li', '', n))
   })
-  chiTiet.appendChild(danhSachNghia)
+  khung.appendChild(danhSachNghia)
+}
+
+// Tạo MỘT dòng trong danh sách (dùng chung cho Tra từ và Sổ từ)
+function taoDongTu(tu) {
+  const dong = taoThe('li', 'dong-ket-qua')
+
+  // Hàng trên: chữ Hán to + pinyin nhỏ màu xám
+  const dongTren = taoThe('div', 'dong-tren')
+  dongTren.appendChild(taoThe('span', 'chu-han', tu.gian_the))
+  dongTren.appendChild(taoThe('span', 'pinyin', doiPinyinSangDau(tu.pinyin)))
+  dong.appendChild(dongTren)
+
+  // Hàng dưới: chỉ lấy nghĩa đầu tiên (phần trước dấu ";"), CSS sẽ tự cắt "…" nếu dài
+  dong.appendChild(taoThe('div', 'nghia-ngan', tu.nghia.split(';')[0].trim()))
+
+  return dong
 }
 
 // Đổi nút sang trạng thái "đã lưu": đổi chữ, đổi màu, khoá nút (bước này chưa có bỏ lưu)
@@ -187,7 +209,7 @@ function chonTu(chiSo) {
   // Nếu dòng đang nằm ngoài vùng nhìn thấy thì cuộn danh sách vừa đủ để thấy nó
   dongMoi.scrollIntoView({ block: 'nearest' })
 
-  hienChiTiet(danhSachTu[chiSo])
+  hienChiTiet(chiTiet, danhSachTu[chiSo])
 }
 
 // Vẽ lại toàn bộ danh sách kết quả ở cột trái
@@ -197,16 +219,7 @@ function hienDanhSach() {
   chiSoChon = -1
 
   danhSachTu.forEach((tu, chiSo) => {
-    const dong = taoThe('li', 'dong-ket-qua')
-
-    // Hàng trên: chữ Hán to + pinyin nhỏ màu xám
-    const dongTren = taoThe('div', 'dong-tren')
-    dongTren.appendChild(taoThe('span', 'chu-han', tu.gian_the))
-    dongTren.appendChild(taoThe('span', 'pinyin', doiPinyinSangDau(tu.pinyin)))
-    dong.appendChild(dongTren)
-
-    // Hàng dưới: chỉ lấy nghĩa đầu tiên (phần trước dấu ";"), CSS sẽ tự cắt "…" nếu dài
-    dong.appendChild(taoThe('div', 'nghia-ngan', tu.nghia.split(';')[0].trim()))
+    const dong = taoDongTu(tu)
 
     // Bấm chuột vào dòng thì chọn từ đó
     dong.addEventListener('click', () => {
@@ -229,7 +242,7 @@ async function timKiem() {
   if (tuKhoa === '') {
     danhSachTu = []
     hienDanhSach()
-    hienLoiNhan('学', 'Thử gõ: 学习, xuexi, ni hao, học', 'Gõ chữ Hán, pinyin hoặc nghĩa tiếng Việt (có dấu hay không dấu đều được)')
+    hienLoiNhan(chiTiet, '学', 'Thử gõ: 学习, xuexi, ni hao, học', 'Gõ chữ Hán, pinyin hoặc nghĩa tiếng Việt (có dấu hay không dấu đều được)')
     return
   }
 
@@ -243,7 +256,7 @@ async function timKiem() {
   hienDanhSach()
 
   if (danhSachTu.length === 0) {
-    hienLoiNhan('？', 'Không tìm thấy từ nào')
+    hienLoiNhan(chiTiet, '？', 'Không tìm thấy từ nào')
   } else {
     chonTu(0)   // tự chọn kết quả đầu tiên
   }
@@ -266,7 +279,51 @@ oTim.addEventListener('keydown', (suKien) => {
 })
 
 // =====================================================================
-// 4. TRANG ÔN TẬP: flashcard 10 từ
+// 4. TRANG SỔ TỪ: danh sách từ đã lưu
+// =====================================================================
+const tieuDeSoTu = document.getElementById('tieuDeSoTu')
+const khungSoTu = document.getElementById('khungSoTu')
+const dsSoTu = document.getElementById('dsSoTu')
+const chiTietSoTu = document.getElementById('chiTietSoTu')
+const soTuTrong = document.getElementById('soTuTrong')
+
+// Bấm một dòng trong sổ: tô nền dòng đó, hiện chi tiết bên phải
+function chonTuTrongSo(dong, tu) {
+  dsSoTu.querySelectorAll('.dang-chon').forEach((d) => d.classList.remove('dang-chon'))
+  dong.classList.add('dang-chon')
+  hienChiTiet(chiTietSoTu, tu)
+}
+
+// Đọc sổ từ (qua main.js) rồi vẽ lại cả trang
+async function taiSoTu() {
+  const cacTu = await window.soTu.danhSach()
+
+  tieuDeSoTu.textContent = 'Sổ từ (' + cacTu.length + ' từ)'
+
+  // Sổ trống: ẩn khung 2 cột, hiện câu hướng dẫn
+  const trong = cacTu.length === 0
+  khungSoTu.hidden = trong
+  soTuTrong.hidden = !trong
+  if (trong) {
+    hienLoiNhan(soTuTrong, '☆', 'Chưa có từ nào. Hãy tra từ và bấm ☆ Lưu.')
+    return
+  }
+
+  // Có từ: vẽ từng dòng, gắn sự kiện bấm cho mỗi dòng
+  dsSoTu.innerHTML = ''
+  dsSoTu.scrollTop = 0
+  cacTu.forEach((tu) => {
+    const dong = taoDongTu(tu)
+    dong.addEventListener('click', () => chonTuTrongSo(dong, tu))
+    dsSoTu.appendChild(dong)
+  })
+
+  // Tự chọn sẵn từ đầu tiên (từ mới lưu nhất), giống trang Tra từ
+  chonTuTrongSo(dsSoTu.firstChild, cacTu[0])
+}
+
+// =====================================================================
+// 5. TRANG ÔN TẬP: flashcard 10 từ
 // =====================================================================
 // Pinyin viết dạng có số (giống từ điển), khi hiện sẽ được đổi sang có dấu
 const boTu = [
@@ -331,7 +388,7 @@ nutNgauNhien.addEventListener('click', () => {
 })
 
 // =====================================================================
-// 5. KHỞI ĐỘNG: chuẩn bị sẵn cả 2 trang và đặt con trỏ vào ô tìm
+// 6. KHỞI ĐỘNG: chuẩn bị sẵn các trang và đặt con trỏ vào ô tìm
 // =====================================================================
 hienTu()      // flashcard hiện sẵn từ đầu tiên
 timKiem()     // ô tìm đang trống → hiện lời hướng dẫn

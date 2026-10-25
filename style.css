@@ -307,6 +307,24 @@ svg {
 .loi-nhan .chu-han { font-size: 48px; color: var(--mau-vien); }
 
 /* =====================================================================
+   TRANG SỔ TỪ: grid 2 hàng giống trang Tra từ — tiêu đề | khung danh sách + chi tiết
+   ===================================================================== */
+.trang-so-tu.dang-hien {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+}
+
+.tieu-de-trang {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* Thuộc tính hidden phải thắng display: grid của .khung-tra, nếu không khung vẫn hiện */
+.trang-so-tu [hidden] { display: none; }
+
+/* =====================================================================
    TRANG ÔN TẬP: thẻ flashcard nằm giữa vùng nội dung
    ===================================================================== */
 .trang-on-tap.dang-hien {
