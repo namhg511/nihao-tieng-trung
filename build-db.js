@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 const fs = require('fs')                          // fs: đọc / xoá file trên máy
 const { DatabaseSync } = require('node:sqlite')   // DatabaseSync: làm việc với SQLite
+const { chuoiTimNghia } = require('./chuan-hoa')  // hàm chuẩn hoá nghĩa, dùng chung với main.js
 
 // Đường dẫn tới file từ điển gốc và file cơ sở dữ liệu sẽ tạo ra
 const FILE_TU_DIEN = 'data/CVDICT.u8'
@@ -17,15 +18,7 @@ const FILE_DB = 'data/tu-dien.db'
 // 2. Các hàm nhỏ để chuẩn bị chữ dùng cho việc tìm kiếm
 // ---------------------------------------------------------------------------
 
-// Bỏ dấu tiếng Việt — giống hệt hàm boDau trong index.html
-// Ví dụ: "Học tập" → "hoc tap", "Đi" → "di"
-function boDau(chuoi) {
-  return chuoi
-    .toLowerCase()                      // đổi sang chữ thường
-    .normalize('NFD')                   // tách dấu ra khỏi chữ: "é" thành "e" + dấu sắc
-    .replace(/[\u0300-\u036f]/g, '')    // xoá các dấu vừa tách ra
-    .replace(/đ/g, 'd')                 // "đ" không tách được bằng NFD nên đổi riêng
-}
+// (Hàm bỏ dấu tiếng Việt nằm trong file chuan-hoa.js, dùng chung với main.js)
 
 // Chuẩn bị pinyin để tìm: "xue2 xi2" → "xuexi", "nu:3 ren2" → "nvren"
 function pinyinTim(pinyin) {
@@ -81,7 +74,7 @@ for (const dong of cacDong) {
     pinyin,
     pinyinTim: pinyinTim(pinyin),
     nghia,
-    nghiaTim: boDau(nghia),
+    nghiaTim: chuoiTimNghia(nghia),
   })
 }
 
@@ -106,7 +99,7 @@ db.exec(`
     pinyin     TEXT NOT NULL,        -- pinyin gốc, ví dụ "xue2 xi2"
     pinyin_tim TEXT NOT NULL,        -- pinyin để tìm, ví dụ "xuexi"
     nghia      TEXT NOT NULL,        -- nghĩa tiếng Việt
-    nghia_tim  TEXT NOT NULL         -- nghĩa đã bỏ dấu, để tìm
+    nghia_tim  TEXT NOT NULL         -- nghĩa bỏ dấu, chỉ còn các từ, ví dụ " hoc hoc tap "
   )
 `)
 

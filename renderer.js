@@ -188,7 +188,7 @@ async function timKiem() {
   if (tuKhoa === '') {
     danhSachTu = []
     hienDanhSach()
-    hienLoiNhan('学', 'Thử gõ: 学习, xuexi, ni hao', 'Gõ chữ Hán hoặc pinyin (có dấu, có số hay không dấu đều được)')
+    hienLoiNhan('学', 'Thử gõ: 学习, xuexi, ni hao, học', 'Gõ chữ Hán, pinyin hoặc nghĩa tiếng Việt (có dấu hay không dấu đều được)')
     return
   }
 
